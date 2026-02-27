@@ -20,8 +20,9 @@ var (
 	suggestNameStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
 	suggestDescStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
 	suggestSelStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("51")).Bold(true)
-	splashLogoDim     = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
-	splashLogoBright  = lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Bold(true)
+	splashLogoBlue    = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
+	splashLogoWhite    = lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Bold(true)
+	splashLogoYellow  = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Bold(true)
 	splashCardStyle   = lipgloss.NewStyle().
 				Border(lipgloss.NormalBorder(), false, false, false, true).
 				BorderForeground(lipgloss.Color("39")).
@@ -38,6 +39,65 @@ var (
 	roleLabelOtherStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
 	promptIndicator     = lipgloss.NewStyle().Foreground(lipgloss.Color("86")).Bold(true)
 )
+
+var orchestraBlockGlyphs = map[rune][]string{
+	'O': {
+		" ####### ",
+		"##     ##",
+		"##     ##",
+		"##     ##",
+		" ####### ",
+	},
+	'R': {
+		"######## ",
+		"##     ##",
+		"######## ",
+		"##   ##  ",
+		"##    ## ",
+	},
+	'C': {
+		" ####### ",
+		"##       ",
+		"##       ",
+		"##       ",
+		" ####### ",
+	},
+	'H': {
+		"##     ##",
+		"##     ##",
+		"#########",
+		"##     ##",
+		"##     ##",
+	},
+	'E': {
+		"#########",
+		"##       ",
+		"#######  ",
+		"##       ",
+		"#########",
+	},
+	'S': {
+		" ####### ",
+		"##       ",
+		" ######  ",
+		"       ##",
+		"#######  ",
+	},
+	'T': {
+		"#########",
+		"   ##    ",
+		"   ##    ",
+		"   ##    ",
+		"   ##    ",
+	},
+	'A': {
+		" ####### ",
+		"##     ##",
+		"#########",
+		"##     ##",
+		"##     ##",
+	},
+}
 
 // LoadingTickMsg is sent periodically to update the loading timer display.
 type LoadingTickMsg struct{}
@@ -320,15 +380,44 @@ func (m *ChatModel) renderSlashSuggestionsInline() string {
 }
 
 func (m *ChatModel) renderOrchestraLogo() string {
-	chars := []rune("orchestra")
+	if m.width > 0 && m.width < 96 {
+		return m.renderCompactOrchestraSubLogo()
+	}
+
+	word := []rune("ORCHESTRA")
+	rows := make([]string, 5)
+	for i, ch := range word {
+		glyph, ok := orchestraBlockGlyphs[ch]
+		if !ok {
+			continue
+		}
+		style := splashLogoBlue
+		if i >= len(word)-3 {
+			style = splashLogoYellow
+		}
+		for row := range rows {
+			rows[row] += style.Render(glyph[row])
+			if i < len(word)-1 {
+				rows[row] += "  "
+			}
+		}
+	}
+	return strings.Join(rows, "\n") + "\n" + m.renderCompactOrchestraSubLogo()
+}
+
+func (m *ChatModel) renderCompactOrchestraSubLogo() string {
+	chars := []rune("Create Your Team of AI Agents")
 	var b strings.Builder
 	for i, ch := range chars {
-		if i >= len(chars)-4 {
-			b.WriteString(splashLogoBright.Render(strings.ToUpper(string(ch))))
-		} else {
-			b.WriteString(splashLogoDim.Render(strings.ToUpper(string(ch))))
+//i want white
+		style := splashLogoWhite 
+		// if i >= len(chars)-3 {
+		// 	style = placeholderStyle
+		// }
+		b.WriteString(style.Render(string(ch)))
+		if i < len(chars)-1 {
+			b.WriteRune(' ')
 		}
-		b.WriteRune(' ')
 	}
 	return b.String()
 }
